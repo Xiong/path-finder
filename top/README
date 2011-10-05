@@ -1,0 +1,38 @@
+Path-Finder version 0.0.0
+
+"Where the @!$*#! are my files!??"
+                -- with apologies to Harvey Pekar
+
+You want to store installation-specific files somewhere. Support files, 
+configurations, databases, properties, preferences, options: these are not 
+primary user data. You want to store them in some path during development, 
+install them to some other path on a target host, find them at run time. 
+
+You want a cross-platform solution and you don't want demanding dependencies. 
+You want to survive difficult installations and handle upgrades cleanly. 
+You don't want to be bothered by too many details but you want some control. 
+
+You may want several configurations on the same machine: default, system, 
+user, project. Path::Finder will let you store and retrieve such files easily. 
+
+INSTALLATION
+
+To install this module with Module::Build, run the following commands:
+
+    perl Build.PL
+    Build
+    Build test
+    Build install
+
+DEPENDENCIES
+
+perl 5.8.8 or better. 
+For Perl module dependencies, please see Build.PL. 
+
+LICENSE
+
+Copyright (C) 2011 Xiong Changnian <xiong@cpan.org>
+
+This library and its contents are released under Artistic License 2.0:
+
+(http://www.opensource.org/licenses/artistic-license-2.0.php)
