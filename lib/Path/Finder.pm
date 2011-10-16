@@ -1,49 +1,24 @@
 package Path::Finder;
 #=========# MODULE USAGE
-#~ use Path::Finder                # Find, install property-support-config files
-#~     qw( :all );
+#~ use Path::Finder;               # Find, install property-support-config files
 #~ 
 
 use 5.008008;
 use strict;
 use warnings;
-use Carp;
-
 use version 0.94; our $VERSION = qv('0.0.0');
 
-use Data::Lock qw( dlock );     # Declare locked scalars
+# Core modules
+use Carp;                       # Warn or die from caller’s location
+use File::Spec;                 # Portably perform operations on file names
+
+# CPAN modules
+use File::HomeDir;              # Find your home... on any platform
+
+
 use Scalar::Util;               # General-utility scalar subroutines
 use Scalar::Util::Reftype;      # Alternate reftype() interface
 
-use Exporter::Easy (            # Procedural as well as OO interface; you pick
-    TAGS    => [
-        util        => [qw{
-            crash
-            crank
-            paired
-            
-        }],
-                
-        const       => [qw{
-            $QRTRUE
-            $QRFALSE
-            
-        }],
-        
-        test        => [qw{
-            akin
-            
-        }],
-        
-        oo          => [qw{
-            new
-            init
-            
-        }],
-        
-        all         => [qw{ :util :const :test :oo }]
-    ],
-);
 
 ## use
 
