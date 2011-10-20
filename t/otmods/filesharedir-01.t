@@ -5,19 +5,19 @@ use warnings;
 use Test::More;
 use Test::Trap qw( :default );
 
-use File::HomeDir;
+use File::ShareDir;
 
 #~ use Devel::Comments '###';                                  # debug only #~
 #~ use Devel::Comments '#####', ({ -file => 'tr-debug.log' });              #~
 
 #============================================================================#
 # 
-# Play around with File::HomeDir.  
+# Play around with File::ShareDir.  
 
 #----------------------------------------------------------------------------#
 # SETUP
 
-my $unit        = 'File::HomeDir: ';
+my $unit        = 'File::ShareDir: ';
 my $got         ;
 my $want        ;
 my $diag        = $unit;
@@ -70,10 +70,10 @@ for my $i (0..$#test_data) {
     my $rv = trap{ 
         
         given ($given) {
-            when (/my_home/)        { File::HomeDir->my_home }
-            when (/my_data/)        { File::HomeDir->my_data }
-            when (/my_config/)      { File::HomeDir->my_config }
-            when (/my_dist_config/) { File::HomeDir->my_dist_config }
+            when (/my_home/)        { File::ShareDir->my_home }
+            when (/my_data/)        { File::ShareDir->my_data }
+            when (/my_config/)      { File::ShareDir->my_config }
+            when (/my_dist_config/) { File::ShareDir->my_dist_config }
             default                 { die "Bad or no test argument $given."}
         }; ## given
     }; ## trap
