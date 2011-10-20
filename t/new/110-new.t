@@ -5,8 +5,9 @@ BEGIN{
     eval{
         require Scalar::Util;               # General-utility scalar subroutines
     };
-    $scalar_util_loaded      = !!$@;        # must be package variable
-                                            #   to escape BEGIN block
+    $scalar_util_loaded      = !$@;         # loaded if no error
+                                            #   must be package variable
+                                            #       to escape BEGIN block
 }; ## BEGIN
 
 #~ use lib ('inc', '../inc');                  # during P::F development only
@@ -24,7 +25,7 @@ pass($diag);                                # pass if we get this far
 
 $tc++;
 $diag           = $base . 'new';
-my $pf          = Path::Finder->new('My::Module');
+my $pf          = Path::Finder->new( -module => 'My::Module' );
 if ($scalar_util_loaded) {
     $got            = Scalar::Util::blessed( $pf );
     $want           = 'Path::Finder';
