@@ -1,54 +1,31 @@
 package Path::Finder;
 #=========# MODULE USAGE
-#~ use Path::Finder                # Find, install property-support-config files
-#~     qw( :all );
+#~ use Path::Finder;               # Find, install property-support-config files
 #~ 
 
 use 5.008008;
 use strict;
 use warnings;
-use Carp;
-
 use version 0.94; our $VERSION = qv('0.0.0');
 
-use Data::Lock qw( dlock );     # Declare locked scalars
+# Core modules
+use Carp;                       # Warn or die from caller’s location
+use File::Spec;                 # Portably perform operations on file names
 use Scalar::Util;               # General-utility scalar subroutines
-use Scalar::Util::Reftype;      # Alternate reftype() interface
+use ExtUtils::Installed;        # Inventory management of installed modules
 
-use Exporter::Easy (            # Procedural as well as OO interface; you pick
-    TAGS    => [
-        util        => [qw{
-            crash
-            crank
-            paired
-            
-        }],
-                
-        const       => [qw{
-            $QRTRUE
-            $QRFALSE
-            
-        }],
-        
-        test        => [qw{
-            akin
-            
-        }],
-        
-        oo          => [qw{
-            new
-            init
-            
-        }],
-        
-        all         => [qw{ :util :const :test :oo }]
-    ],
-);
+# CPAN modules
+use Data::Lock qw( dlock );     # Declare locked scalars
+use File::HomeDir;              # Find your home... on any platform
+
+
+#~ use Scalar::Util::Reftype;      # Alternate reftype() interface
+
 
 ## use
 
 # Alternate uses
-#~ use Devel::Comments '#####', ({ -file => 'tr-debug.log' });
+use Devel::Comments '#####', ({ -file => 'debug.log' });
 
 #============================================================================#
 
@@ -62,12 +39,67 @@ our $QRTRUE       = qr/\A(?!$QRFALSE)/    ;
 dlock( my $err     = {
     _unpaired   => 
         [ 'Unpaired arguments passed; named args required:' ],
-    _unsupported_akin   => 
-        [ 'akin() does not support refs except SCALAR and ARRAY.' ],
     
 } ); ## $err
 
 #----------------------------------------------------------------------------#
+
+#=========# INTERNAL ROUTINE
+#
+#   $pf->_get_all_paths();     # short
+#       
+# Purpose   : ____
+# Parms     : ____
+# Reads     : ____
+# Returns   : ____
+# Writes    : ____
+# Throws    : ____
+# See also  : ____
+# 
+# ____
+# 
+sub _get_all_paths {
+    my $self        = shift;
+    my %args        = @_;
+    
+    # Find true calling package if not passed in
+    my $module      = $args{-module};
+    my $i           ;
+    until ( $module and ($module ne __PACKAGE__) ) {    # not me!
+        $module         = caller $i;
+        $i++;
+        crash "Excessive backtrace to $module" if $i > 255;
+    };
+    
+    
+    
+    
+    
+    return $self;
+}; ## _get_all_paths
+
+#=========# OBJECT system
+#
+#   $pf->system();     # get system-level path
+#       
+# Purpose   : ____
+# Parms     : ____
+# Reads     : ____
+# Returns   : ____
+# Invokes   : ____
+# Writes    : ____
+# Throws    : ____
+# See also  : ____
+# 
+# ____
+#   
+sub system {
+    my $self        = shift;
+    my $path        ;
+    
+    
+    return $path;
+}; ## system
 
 #=========# OBJECT METHOD OR EXTERNAL ROUTINE
 #
@@ -79,7 +111,7 @@ dlock( my $err     = {
 # Purpose   : Fatal out of internal errors
 # Parms     : $errkey   : string    : must begin with '_' (underbar)
 #             @lines    : strings   : free text
-# Reads     : $err->{$errkey}, $err->{-error}{$errkey}
+# Reads     : $err->{$errkey}
 # Returns   : never
 # Throws    : always die()-s
 # See also  : paired(), crank()
@@ -89,26 +121,15 @@ dlock( my $err     = {
 # If not, then all args are considered @lines of text.
 #   
 sub crash {
-    my $self        ;
-    my @lines       ;
-    my $text        ;
-    if ( ref $_[0] ) {              # first arg is a reference
-        $self       = shift;        # hope it's blessed
-        if ( $_[0] =~ /^_/ ) {      # an $errkey was provided
-            my $errkey      = shift;
-##### $errkey    
-            # find and expand error
-            if ( defined $self->{$errkey} ) {
-                push @lines, $errkey;
-                push @lines, @{ $self->{$errkey} };
-            }
-            else {
-                push @lines, "Unimplemented error $errkey";
-            };
-        };
-    };
-    push @lines, @_;                # all remaining args are error text.
-        
+    # Don't shift off the 0th parm; we don't know what it is.
+    my @lines           ;
+    my $text            ;
+    my $unimplemented   = 'Unimplemented error.';
+    ##### @_
+    
+    @lines              = _unfold_errors(@_);
+    if ( not @lines ) { @lines = $unimplemented };
+    
     # Stack backtrace.
     my $call_pkg        = 0;
     my $call_sub        = 3;
@@ -134,6 +155,60 @@ sub crash {
     return 0;                   # should never get here, though
 }; ## crash
 
+sub foobar{'foobar', 'bazbaz'};
+
+#=========# INTERNAL ROUTINE
+#
+#   @lines  = _unfold_errors(@args);     # get error text
+#       
+# Purpose   : For each element recursively, get error text.
+# Parms     : ____
+# Reads     : ____
+# Returns   : ____
+# Writes    : ____
+# Throws    : ____
+# See also  : ____
+# 
+# ____
+# 
+sub _unfold_errors {
+    my $self        ;       # don't just shift: check first
+    my @lines       ;       # accumulate output
+    ##### @_
+    for (@_) {
+        # Is arg in this class or a subclass of it?
+        #   isa() will throw if called on an unblessed ref.
+        if    ( eval{ $_->isa (__PACKAGE__) } ) {
+            $self       = $_;
+        } 
+        elsif ( ref $_ eq 'HASH' ) {
+            $self       = $_;
+        } 
+        elsif ( 0 ) {
+            
+        } 
+        elsif ( 0 ) {
+            
+        } 
+        elsif ( ref $_ eq 'ARRAY' ) {
+            push @lines, _unfold_errors(@$_);
+        } 
+        elsif ( $_ =~ /^_/ ) {      # leading underbar: an $errkey was passed
+            my $errkey      = $_;
+            push @lines, $errkey;
+            # find and expand error if possible
+            if ( $self and ( defined $self->{$errkey} ) ) {
+                push @lines, _unfold_errors( $self, $self->{$errkey} );
+            };
+        } 
+        else {  # not a ref or errkey
+            push @lines, $_;            
+        };
+    }; ## for @_
+    
+    return @lines;
+}; ## _unfold_errors
+
 #=========# EXTERNAL FUNCTION
 #
 #   my %args    = paired(@_);     # check for unpaired arguments
@@ -150,6 +225,8 @@ sub crash {
 #   
 sub paired {
     if ( scalar @_ % 2 ) {  # an odd number modulo 2 is one: true
+    my $paired_error    = $err->{_unpaired};
+#~     ##### $paired_error
         crash( $err->{_unpaired} );
     };
     return @_;
@@ -181,17 +258,15 @@ sub new {
 }; ## new
 
 #=========# OBJECT METHOD
-#   $obj->init( '-key' => $value, '-foo' => $bar );
+#   $pf->init( '-key' => $value, '-foo' => $bar );
 #
-#       initializes $obj with a list of key/value pairs
-#       empty list okay
+# Path::Finder::init() gets all paths for later delivery. 
 #
 sub init {
     my $self    = shift;
     my @args    = paired(@_);
     
-    # assign list to hash
-    %{ $self }  = @args;
+    $self->_get_all_paths(@args);
     
     return $self;
 }; ## init
@@ -213,9 +288,38 @@ This document describes Path::Finder version 0.0.0
 
 =head1 SYNOPSIS
 
-    # Object-oriented usage
+    # in My::Module
     use Path::Finder;
-
+    my $pf          = Path::Finder->new();  # default to current package
+    my $all         = $pf->all();           # get all paths and stats
+    my $path_system = $pf->system();        # get path to system-level config
+    my $path_user   = $pf->user();          #  "    "       user-level config
+    my $path_task   = $pf->task();          #  "    "       task-level config
+    
+    # in my_script.pl or 01_test.t
+    use Path::Finder;
+    my $pf          = Path::Finder->new( -module => 'My::Module' );
+    my $path_user   = $pf->user();
+    
+    # Read your config file.
+    use File::Spec;                         # CORE since perl 5.00405
+    open my $fh, '<', $path or die;         # do-it-yourself
+        ...
+    
+    # Let Path::Finder read config files and merge the results.
+    my $config_data = $pf->read();          # all levels by default
+    my $config_data = $pf->read( '-system', '-user', '-task' );
+    
+    # in your Build.PL
+    my $build = Module::Build->new(
+        configure_requires  => {
+            'Path::Finder'      => 0,
+        },
+    );
+    
+    
+    
+    $build->create_build_script;
     
     __END__
 
