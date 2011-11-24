@@ -68,7 +68,7 @@ sub _get_all_paths {
     until ( $module and ($module ne __PACKAGE__) ) {    # not me!
         $module         = caller $i;
         $i++;
-        die "Excessive backtrace to $module" if $i > 255;
+        crash "Excessive backtrace to $module" if $i > 255;
     };
     
     
@@ -77,6 +77,29 @@ sub _get_all_paths {
     
     return $self;
 }; ## _get_all_paths
+
+#=========# OBJECT system
+#
+#   $pf->system();     # get system-level path
+#       
+# Purpose   : ____
+# Parms     : ____
+# Reads     : ____
+# Returns   : ____
+# Invokes   : ____
+# Writes    : ____
+# Throws    : ____
+# See also  : ____
+# 
+# ____
+#   
+sub system {
+    my $self        = shift;
+    my $path        ;
+    
+    
+    return $path;
+}; ## system
 
 #=========# OBJECT METHOD OR EXTERNAL ROUTINE
 #
